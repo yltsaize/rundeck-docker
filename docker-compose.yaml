@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  rundeck:
+    build: .
+    image: rundeck
+    restart: unless-stopped
+    environment: {}
+    volumes:
+    - ./data:/home/rundeck/server/data
+    ports:
+    - 4440:4440
