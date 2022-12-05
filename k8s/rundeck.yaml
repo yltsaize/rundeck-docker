@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rundeck
+  labels:
+    app: rundeck
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rundeck
+  template:
+    metadata:
+      labels:
+        app: rundeck
+    spec:
+      serviceAccountName: rundeck
+      containers:
+      - name: rundeck
+        image: yltsaize/rundeck:4.8.0-20221110-k8s.1
+        env:
+        - name: RD_CONFIG_ENV
+          value: incluster
+        ports:
+        - containerPort: 4440
+        livenessProbe:
+          # an http probe
+          httpGet:
+            path: /
+            port: 4440
+            scheme: HTTP
+          initialDelaySeconds: 500
+          periodSeconds: 120
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 4440
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - mountPath: /var/run/secrets/tokens
+          name: vault-token
+        - mountPath: /home/rundeck/server/data
+          name: rundeck-data
+      volumes:
+      - name: vault-token
+        projected:
+          sources:
+          - serviceAccountToken:
+              path: vault-token
+              expirationSeconds: 7200
+              audience: vault
+      - name: rundeck-data
+        persistentVolumeClaim:
+          claimName: rundeck-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rundeck-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rundeck
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: rundeck-admin
+subjects:
+- kind: ServiceAccount
+  name: rundeck
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
