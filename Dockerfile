@@ -18,4 +18,8 @@ RUN pip install kubernetes \
 RUN curl -sLo libext/rundeck-s3-log-plugin-1.0.13.jar \
     https://github.com/rundeck-plugins/rundeck-s3-log-plugin/releases/download/v1.0.13/rundeck-s3-log-plugin-1.0.13.jar
 
+# vault-storage
+RUN curl -sLo libext/vault-storage-1.3.7.jar \
+    https://github.com/rundeck-plugins/vault-storage/releases/download/1.3.7/vault-storage-1.3.7.jar
+
 USER rundeck
